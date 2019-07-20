@@ -1,7 +1,7 @@
 #include <pcap.h>
 #include <stdio.h>
 #include <stdint.h>
-#define eth_end 6
+#define eth_ 6
 #define ip_start 26
 #define ip_count 4
 #define ip_number 0x0800
@@ -13,7 +13,7 @@
 void ether_print(const u_char *mac);
 void ip_print(const u_char *ip);
 void tcp_print(const u_char *tcp);
-void tcpData_print(const u_char *tcp);
+void tcpData_print(int Total_length, int IHL, int THL, const u_char *TcpData);
 
 void usage() {
   printf("syntax: pcap_test <interface>\n");
@@ -44,12 +44,16 @@ int main(int argc, char* argv[]) {
       break;
      uint16_t ip_check = (packet[12]<<8)|packet[13];
      int tcp_check = packet[23];
+     int TotalSize= ((packet[16]<<8) | packet[17]);
+     int IHL =((packet[14]& 0x0F)<< 2);
+     int THL =((packet[46]&0xF0) >> 2);
+
     if( ip_number == ip_check &&  tcp_number == tcp_check){
    printf("--------------Packet[%d]---------------\n\n",i);
    printf("eth.Dmac::");
    ether_print(packet);
    printf("eth.Smac::");
-   ether_print(&packet[eth_end]);
+   ether_print(packet+6);
    printf("Ether_Type::");
    printf("%02X%02X\n",packet[12],packet[13]);
    printf("ip.sip::");
@@ -63,9 +67,11 @@ int main(int argc, char* argv[]) {
    printf("tcp.dport::");
    tcp_print(&packet[tcpPort_start+2]);
    printf("tcp.data::");
-   tcpData_print(&packet[tcpData_start]);
+   tcpData_print(TotalSize,IHL,THL,&packet[tcpData_start]);
       i++;
     }
+
+   //tcpdata_size==total length - lhp - tcp dataoffset
   //printf("%u bytes captured\n", header->caplen);
 
   }
@@ -94,12 +100,30 @@ void tcp_print(const u_char *tcp)
 {
     printf("%02u\n", (tcp[0]<<8) | tcp[1]);
 }
-void tcpData_print(const u_char *tcp)
+void tcpData_print(int Total_length, int IHL, int THL, const u_char *TcpData)
 {
     int i = 0;
-    for(  ; i<9; i++){
-     printf("%02X ",tcp[i]);
+    int TcpData_size = Total_length - IHL -THL;
+    if(TcpData_size == 0)
+    {
+        printf("No Data!!\n");
     }
-    printf("%02X\n",tcp[i]);
+    else if ( 0 <TcpData_size && TcpData_size<=10)
+    {
+
+        for(  ; i<TcpData_size-1; i++){
+         printf("%u ",TcpData[i]);
+        }
+        printf("%u\n",TcpData[i]);
+    }
+    else
+    {
+        for(  ; i<9; i++){
+         printf("%u ",TcpData[i]);
+        }
+        printf("%u\n",TcpData[i]);
+
+    }
+
 
 }
