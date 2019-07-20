@@ -112,16 +112,16 @@ void tcpData_print(int Total_length, int IHL, int THL, const u_char *TcpData)
     {
 
         for(  ; i<TcpData_size-1; i++){
-         printf("%u ",TcpData[i]);
+         printf("%02X ",TcpData[i]);
         }
-        printf("%u\n",TcpData[i]);
+        printf("%02X\n",TcpData[i]);
     }
     else
     {
         for(  ; i<9; i++){
-         printf("%u ",TcpData[i]);
+         printf("%02X ",TcpData[i]);
         }
-        printf("%u\n",TcpData[i]);
+        printf("%02X\n",TcpData[i]);
 
     }
 
